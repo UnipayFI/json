@@ -452,17 +452,18 @@ func appendTimeUnix(b []byte, t time.Time, pow10 uint64) []byte {
 		b = append(b, '-')
 		sec, nsec = negateSecNano(sec, nsec)
 	}
+	// https://github.com/golang/go/issues/73486
 	switch {
 	case pow10 == 1e0: // fast case where units is in seconds
 		b = strconv.AppendUint(b, uint64(sec), 10)
-		return appendFracBase10(b, uint64(nsec), 1e9)
+		return b
 	case uint64(sec) < 1e9: // intermediate case where units is not seconds, but no overflow
 		b = strconv.AppendUint(b, uint64(sec)*uint64(pow10)+uint64(uint64(nsec)/(1e9/pow10)), 10)
-		return appendFracBase10(b, (uint64(nsec)*pow10)%1e9, 1e9)
+		return b
 	default: // slow case where units is not seconds and overflow would occur
 		b = strconv.AppendUint(b, uint64(sec), 10)
 		b = appendPaddedBase10(b, uint64(nsec)/(1e9/pow10), pow10)
-		return appendFracBase10(b, (uint64(nsec)*pow10)%1e9, 1e9)
+		return b
 	}
 }
 
